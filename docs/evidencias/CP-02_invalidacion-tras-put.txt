@@ -1,0 +1,37 @@
+================================================================
+CP-02 · Invalidación de la caché tras una actualización (producto 2)
+Fecha: 2026-10-03 17:34:41 · API: http://localhost:3000 · TTL: 60 s · Timeout Redis: 500 ms
+================================================================
+
+[17:34:41] Precondición: la llave está vacía y el producto queda en caché tras dos lecturas
+  → GET  /productos/2     200  X-Cache=MISS      2 ms  {"id":2,"nombre":"Mouse inalámbrico","precio":59900.5,"stock":40,"actualizado_en":"2026-10-03T22:33:19.903Z"}
+  ✔ primera lectura: MISS
+  → GET  /productos/2     200  X-Cache=HIT       1 ms  {"id":2,"nombre":"Mouse inalámbrico","precio":59900.5,"stock":40,"actualizado_en":"2026-10-03T22:33:19.903Z"}
+  ✔ segunda lectura: HIT
+  ✔ la llave producto:2 existe en Redis
+
+[17:34:42] Se actualiza el precio por la API
+  → PUT  /productos/2     200  X-Cache=-         3 ms  {"id":2,"nombre":"Mouse inalámbrico","precio":60900.5,"stock":40,"actualizado_en":"2026-10-03T22:34:42.094Z"}
+  ✔ PUT responde 200
+  ✔ la llave producto:2 fue invalidada (EXISTS = 0)
+
+[17:34:42] La siguiente lectura refleja el valor nuevo
+  → GET  /productos/2     200  X-Cache=MISS      2 ms  {"id":2,"nombre":"Mouse inalámbrico","precio":60900.5,"stock":40,"actualizado_en":"2026-10-03T22:34:42.094Z"}
+  ✔ lectura tras el PUT: MISS (se lee de la BD)
+  ✔ precio en la respuesta = 60900.5
+  → GET  /productos/2     200  X-Cache=HIT       1 ms  {"id":2,"nombre":"Mouse inalámbrico","precio":60900.5,"stock":40,"actualizado_en":"2026-10-03T22:34:42.094Z"}
+  ✔ lectura siguiente: HIT con el valor nuevo
+  ✔ precio en la BD = 60900.5
+[17:34:42] Estado de la caché:
+producto:1     TTL=59    {"id":1,"nombre":"Teclado mecánico","precio":189900,"stock":15,"actualizado_en":"2026-10-03T21:19:02.396Z"}
+producto:2     TTL=59    {"id":2,"nombre":"Mouse inalámbrico","precio":60900.5,"stock":40,"actualizado_en":"2026-10-03T22:34:42.094Z"}
+[17:34:43] Limpieza: al salir se restaura el producto (precio 59900.5)
+
+Log de la API durante el caso:
+  [api] GET /productos/2 200 X-Cache=MISS 1.5ms
+  [api] GET /productos/2 200 X-Cache=HIT 1.0ms
+  [api] PUT /productos/2 200 X-Cache=- 3.4ms
+  [api] GET /productos/2 200 X-Cache=MISS 1.7ms
+  [api] GET /productos/2 200 X-Cache=HIT 1.1ms
+
+[17:34:43] CP-02: APROBADO

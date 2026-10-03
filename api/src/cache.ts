@@ -2,9 +2,7 @@
 //
 // Interfaz acordada A ↔ B (docs/estructura-trabajo.md, sección 7): ninguna función lanza
 // excepciones; ante un fallo de Redis devuelven status 'ERROR' y la API responde X-Cache: BYPASS.
-//
-// Esta versión es la base: conexión configurada y ping para /health.
-// TODO(B): implementar get/set/del con TTL, timeout por comando y manejo de JSON corrupto.
+// Cada comando tiene un tope de REDIS_COMMAND_TIMEOUT_MS para que una caché lenta no bloquee la API.
 import { createClient } from 'redis';
 import config from './config.ts';
 
@@ -52,20 +50,54 @@ export async function ping(): Promise<void> {
   await withTimeout(client.ping(), config.redisCommandTimeoutMs);
 }
 
-export async function get<T>(_key: string): Promise<CacheGetResult<T>> {
-  return { status: 'MISS' };
+// Formato de llave acordado: producto:{id}. La API usa este helper en vez de armar la llave a mano.
+export const claveProducto = (id: number | string): string => `producto:${id}`;
+
+const comoError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)));
+
+export async function get<T>(key: string): Promise<CacheGetResult<T>> {
+  let raw: string | null;
+  try {
+    raw = await withTimeout(client.get(key), config.redisCommandTimeoutMs);
+  } catch (err) {
+    return { status: 'ERROR', error: comoError(err) };
+  }
+  if (raw === null) return { status: 'MISS' };
+
+  try {
+    return { status: 'HIT', value: JSON.parse(raw) as T };
+  } catch {
+    // Entrada corrupta: se trata como MISS y se borra para que la siguiente lectura la regenere.
+    console.error(`[cache] JSON inválido en ${key}; se elimina la llave`);
+    await del(key);
+    return { status: 'MISS' };
+  }
 }
 
 export async function set(
-  _key: string,
-  _value: unknown,
-  _ttlSeconds: number = config.cacheTtlSeconds,
+  key: string,
+  value: unknown,
+  ttlSeconds: number = config.cacheTtlSeconds,
 ): Promise<CacheWriteResult> {
-  return { status: 'OK' };
+  try {
+    // EX fija el TTL en la misma operación: nunca queda una llave sin expiración (R6).
+    await withTimeout(
+      client.set(key, JSON.stringify(value), { expiration: { type: 'EX', value: ttlSeconds } }),
+      config.redisCommandTimeoutMs,
+    );
+    return { status: 'OK' };
+  } catch (err) {
+    return { status: 'ERROR', error: comoError(err) };
+  }
 }
 
-export async function del(_key: string): Promise<CacheWriteResult> {
-  return { status: 'OK' };
+export async function del(key: string): Promise<CacheWriteResult> {
+  try {
+    await withTimeout(client.del(key), config.redisCommandTimeoutMs);
+    return { status: 'OK' };
+  } catch (err) {
+    return { status: 'ERROR', error: comoError(err) };
+  }
 }
 
 export async function close(): Promise<void> {
