@@ -1,0 +1,28 @@
+[16:21:48] Escenario detenido: deteniendo Redis
+
+Escenario: Redis detenido · timeout por comando = 500 ms
+
+┌─────────┬───────────────┬─────────┬──────┬──────────────────────────────────────────┐
+│ (index) │ configuracion │ intento │ ms   │ resultado                                │
+├─────────┼───────────────┼─────────┼──────┼──────────────────────────────────────────┤
+│ 0       │ 'por defecto' │ 1       │ 5004 │ 'excepción: TimeoutError'                │
+│ 1       │ 'laboratorio' │ 1       │ 1    │ 'ERROR (The client is offline) → BYPASS' │
+│ 2       │ 'por defecto' │ 2       │ 5002 │ 'excepción: TimeoutError'                │
+│ 3       │ 'laboratorio' │ 2       │ 0    │ 'ERROR (The client is offline) → BYPASS' │
+│ 4       │ 'por defecto' │ 3       │ 5001 │ 'excepción: TimeoutError'                │
+│ 5       │ 'laboratorio' │ 3       │ 0    │ 'ERROR (The client is offline) → BYPASS' │
+└─────────┴───────────────┴─────────┴──────┴──────────────────────────────────────────┘
+[16:22:04] Escenario congelado: Redis acepta conexiones, se congelará al medir
+
+Escenario: Redis congelado · timeout por comando = 500 ms
+
+┌─────────┬───────────────┬─────────┬───────┬──────────────────────────────────────────────┐
+│ (index) │ configuracion │ intento │ ms    │ resultado                                    │
+├─────────┼───────────────┼─────────┼───────┼──────────────────────────────────────────────┤
+│ 0       │ 'por defecto' │ 1       │ 10023 │ 'sin respuesta tras 10000 ms'                │
+│ 1       │ 'laboratorio' │ 1       │ 503   │ 'ERROR (timeout de Redis (500 ms)) → BYPASS' │
+│ 2       │ 'por defecto' │ 2       │ 10025 │ 'sin respuesta tras 10000 ms'                │
+│ 3       │ 'laboratorio' │ 2       │ 503   │ 'ERROR (timeout de Redis (500 ms)) → BYPASS' │
+│ 4       │ 'por defecto' │ 3       │ 10007 │ 'sin respuesta tras 10000 ms'                │
+│ 5       │ 'laboratorio' │ 3       │ 503   │ 'ERROR (timeout de Redis (500 ms)) → BYPASS' │
+└─────────┴───────────────┴─────────┴───────┴──────────────────────────────────────────────┘

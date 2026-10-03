@@ -18,7 +18,12 @@
     "infra:reset": "docker compose down -v && docker compose up -d --wait",
     "infra:logs": "docker compose logs -f",
     "db:psql": "docker compose exec postgres psql -U lab -d labcache",
-    "redis:cli": "docker compose exec redis redis-cli"
+    "redis:cli": "docker compose exec redis redis-cli",
+    "redis:inspeccionar": "scripts/redis-inspeccionar.sh",
+    "falla:redis-caida": "scripts/redis-caida.sh",
+    "falla:redis-recuperar": "scripts/redis-recuperar.sh",
+    "falla:bd-directa": "scripts/bd-escritura-directa.sh",
+    "hallazgo:cliente-redis": "scripts/medir-cliente-redis.sh"
   },
   "dependencies": {
     "express": "5.2.1",

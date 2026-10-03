@@ -2,7 +2,7 @@ name: lab-cache
 
 services:
   postgres:
-    image: postgres:17-alpine
+    image: docker.io/library/postgres:17-alpine
     container_name: lab-cache-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-lab}
@@ -21,7 +21,7 @@ services:
       retries: 15
 
   redis:
-    image: redis:7.4-alpine
+    image: docker.io/library/redis:7.4-alpine
     container_name: lab-cache-redis
     # Caché pura: sin persistencia en disco, memoria acotada y desalojo LRU
     command:
