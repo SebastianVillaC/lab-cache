@@ -1,0 +1,41 @@
+================================================================
+CP-06 · Dato desactualizado por escritura fuera de la API (producto 4)
+Fecha: 2026-10-03 17:33:21 · API: http://localhost:3000 · TTL: 60 s · Timeout Redis: 500 ms
+================================================================
+
+[17:33:21] Precondición: el producto entra a la caché
+  → GET  /productos/4     200  X-Cache=MISS      1 ms  {"id":4,"nombre":"Audífonos USB","precio":99000,"stock":25,"actualizado_en":"2026-10-03T21:17:59.474Z"}
+  ✔ primera lectura: MISS
+  ✔ la llave tiene TTL (0 < 60 ≤ 60)
+
+[17:33:21] Escritura directa en la BD (otro sistema o un administrador)
+  UPDATE 1
+  ✔ precio en la BD = 104000.00
+
+[17:33:22] Detección: la API sirve desde la caché un precio distinto al de la BD
+  → GET  /productos/4     200  X-Cache=HIT       0 ms  {"id":4,"nombre":"Audífonos USB","precio":99000,"stock":25,"actualizado_en":"2026-10-03T21:17:59.474Z"}
+  ✔ X-Cache = HIT
+  ✔ la API responde el precio viejo (99000)
+  ✔ inconsistencia: API (99000) ≠ BD (104000)
+
+[17:33:22] Mitigación por TTL: se espera a que la llave expire
+  TTL restante de producto:4: 59 s
+  TTL restante de producto:4: 49 s
+  TTL restante de producto:4: 39 s
+  TTL restante de producto:4: 29 s
+  TTL restante de producto:4: 19 s
+  TTL restante de producto:4: 9 s
+[17:34:23] La llave expiró (TTL = -2)
+
+[17:34:23] Tras vencer el TTL la API vuelve a ser coherente con la BD
+  → GET  /productos/4     200  X-Cache=MISS      8 ms  {"id":4,"nombre":"Audífonos USB","precio":104000,"stock":25,"actualizado_en":"2026-10-03T22:33:22.067Z"}
+  ✔ X-Cache = MISS
+  ✔ precio en la respuesta = precio en la BD (104000.00)
+[17:34:23] Limpieza: al salir se restaura el precio original (99000)
+
+Log de la API durante el caso:
+  [api] GET /productos/4 200 X-Cache=MISS 1.2ms
+  [api] GET /productos/4 200 X-Cache=HIT 0.6ms
+  [api] GET /productos/4 200 X-Cache=MISS 8.0ms
+
+[17:34:23] CP-06: APROBADO

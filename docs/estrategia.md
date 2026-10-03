@@ -145,9 +145,27 @@ No se usan mocks de Redis ni de PostgreSQL: todas las fallas se provocan sobre l
 
 Los scripts usan los nombres fijos de los contenedores (`lab-cache-redis`, `lab-cache-postgres`), así que funcionan igual con Docker y con Podman.
 
+### Escenarios de B (`scripts/escenarios/`)
+
+Cada escenario ejecuta un caso completo sobre la API en marcha (`npm start`) y el stack real. Verifica cada paso, restaura los datos que modifica (aunque el caso falle a mitad) y termina con `APROBADO` o `FALLIDO` y el código de salida correspondiente. Si se define `API_LOG` con la ruta del log de la API (`npm start > api.log`), el escenario anexa las líneas que la API registró durante el caso. Estos scripts son también el guion de la demostración.
+
+| Comando | Caso | Duración | Evidencia |
+|---|---|---|---|
+| `npm run escenario:cp-02` | CP-02 · Invalidación tras PUT | ~1 s | `docs/evidencias/CP-02_invalidacion-tras-put.txt` |
+| `npm run escenario:cp-05` | CP-05 · Redis caído → BYPASS | ~1 s | `docs/evidencias/CP-05_redis-caido-bypass.txt` |
+| `npm run escenario:cp-06` | CP-06 · Dato desactualizado hasta que vence el TTL | ≈ `CACHE_TTL_SECONDS` | `docs/evidencias/CP-06_dato-desactualizado-ttl.txt` |
+| `npm run escenario:cp-08` | CP-08 · Recuperación de Redis | ~2 s | `docs/evidencias/CP-08_recuperacion-redis.txt` |
+
+Precondición común: todos los casos esperan a que `/health` reporte `redis = up` antes de empezar. Al ejecutarlos seguidos, el cliente de la API tarda hasta 2 s en reconectarse después de que el caso anterior vuelve a levantar Redis. Sin esa espera, el caso siguiente empezaba en `BYPASS`: un falso fallo causado por la preparación de la prueba y no por el sistema.
+
 ### Mecanismo de falla para la suite automatizada
 
-> Pendiente — acuerdo B ↔ C (sección 7 de `estructura-trabajo.md`). Opciones: detener el contenedor desde la prueba, apuntar el cliente a un puerto inexistente o usar Testcontainers.
+> Pendiente — acuerdo B ↔ C (sección 7 de `estructura-trabajo.md`).
+
+**Propuesta de B:** detener y levantar el contenedor real desde la prueba (`docker stop` / `docker start lab-cache-redis` con `child_process`), y antes de cada caso esperar a que `/health` reporte `redis = up`. Es el mismo mecanismo de los escenarios, ya validado. Comparado con las otras opciones:
+
+- **Apuntar el cliente a un puerto inexistente:** solo reproduce el caso de conexión rechazada desde el arranque. No reproduce una caída en caliente ni la recuperación (CP-08), y obliga a crear el cliente de otra forma en las pruebas.
+- **Testcontainers:** aísla mejor, pero agrega una dependencia y su integración con Podman requiere configuración adicional (socket de Podman).
 
 ## 8. Herramientas seleccionadas
 

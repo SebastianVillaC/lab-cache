@@ -1,0 +1,54 @@
+================================================================
+CP-05 · Degradación controlada con Redis caído (producto 3)
+Fecha: 2026-10-03 17:34:39 · API: http://localhost:3000 · TTL: 60 s · Timeout Redis: 500 ms
+================================================================
+
+[17:34:39] Precondición: Redis disponible y el producto en caché
+  → GET  /productos/3     200  X-Cache=MISS      4 ms  {"id":3,"nombre":"Monitor 24\"","precio":749000,"stock":8,"actualizado_en":"2026-10-03T21:17:59.474Z"}
+  → GET  /productos/3     200  X-Cache=HIT       2 ms  {"id":3,"nombre":"Monitor 24\"","precio":749000,"stock":8,"actualizado_en":"2026-10-03T21:17:59.474Z"}
+  ✔ lectura con Redis arriba: HIT
+
+[17:34:39] Se provoca la falla: Redis detenido
+  [17:34:39] Deteniendo Redis...
+  [17:34:39] Redis detenido. Estado del contenedor: exited
+
+[17:34:39] Lecturas con Redis caído
+  → GET  /productos/3     200  X-Cache=BYPASS    1 ms  {"id":3,"nombre":"Monitor 24\"","precio":749000,"stock":8,"actualizado_en":"2026-10-03T21:17:59.474Z"}
+  ✔ lectura 1: 200
+  ✔ lectura 1: X-Cache = BYPASS
+  ✔ lectura 1: responde en menos de 1000 ms (1 ms)
+  → GET  /productos/3     200  X-Cache=BYPASS    2 ms  {"id":3,"nombre":"Monitor 24\"","precio":749000,"stock":8,"actualizado_en":"2026-10-03T21:17:59.474Z"}
+  ✔ lectura 2: 200
+  ✔ lectura 2: X-Cache = BYPASS
+  ✔ lectura 2: responde en menos de 1000 ms (2 ms)
+  → GET  /productos/3     200  X-Cache=BYPASS    2 ms  {"id":3,"nombre":"Monitor 24\"","precio":749000,"stock":8,"actualizado_en":"2026-10-03T21:17:59.474Z"}
+  ✔ lectura 3: 200
+  ✔ lectura 3: X-Cache = BYPASS
+  ✔ lectura 3: responde en menos de 1000 ms (2 ms)
+  ✔ el precio coincide con la BD
+
+[17:34:40] Errores funcionales con Redis caído: se mantienen los códigos del contrato
+  → GET  /productos/999999 404  X-Cache=BYPASS    2 ms  {"error":"Producto no encontrado"}
+  ✔ producto inexistente: 404 (no 500)
+  → GET  /productos/abc   400  X-Cache=-         0 ms  {"error":"id inválido","detalles":["id debe ser un entero positivo"]}
+  ✔ id inválido: 400 (no 500)
+
+[17:34:40] Estado reportado por /health
+  → GET  /health          200  X-Cache=-         1 ms  {"status":"degraded","postgres":"up","redis":"down"}
+  ✔ status = degraded
+  ✔ redis = down y postgres = up
+
+Log de la API durante el caso:
+  [api] GET /productos/3 200 X-Cache=MISS 3.9ms
+  [api] GET /productos/3 200 X-Cache=HIT 1.2ms
+  [cache] error de Redis: Socket closed unexpectedly
+  [cache] error de Redis: ECONNREFUSED
+  [api] GET /productos/3 200 X-Cache=BYPASS 1.2ms
+  [cache] error de Redis: ECONNREFUSED
+  [api] GET /productos/3 200 X-Cache=BYPASS 2.0ms
+  [api] GET /productos/3 200 X-Cache=BYPASS 1.6ms
+  [api] GET /productos/999999 404 X-Cache=BYPASS 1.6ms
+  [api] GET /productos/abc 400 X-Cache=- 0.2ms
+  [api] GET /health 200 X-Cache=- 0.7ms
+
+[17:34:40] CP-05: APROBADO

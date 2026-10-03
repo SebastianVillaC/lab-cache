@@ -1,0 +1,45 @@
+================================================================
+CP-08 · Recuperación de la caché tras una caída de Redis (producto 1)
+Fecha: 2026-10-03 17:34:40 · API: http://localhost:3000 · TTL: 60 s · Timeout Redis: 500 ms
+================================================================
+
+[17:34:40] Precondición: producto en caché
+  → GET  /productos/1     200  X-Cache=MISS      1 ms  {"id":1,"nombre":"Teclado mecánico","precio":189900,"stock":15,"actualizado_en":"2026-10-03T21:19:02.396Z"}
+  → GET  /productos/1     200  X-Cache=HIT       0 ms  {"id":1,"nombre":"Teclado mecánico","precio":189900,"stock":15,"actualizado_en":"2026-10-03T21:19:02.396Z"}
+  ✔ lectura inicial: HIT
+
+[17:34:40] Redis cae
+  [17:34:40] Deteniendo Redis...
+  [17:34:40] Redis detenido. Estado del contenedor: exited
+  → GET  /productos/1     200  X-Cache=BYPASS    1 ms  {"id":1,"nombre":"Teclado mecánico","precio":189900,"stock":15,"actualizado_en":"2026-10-03T21:19:02.396Z"}
+  ✔ con Redis caído: 200 con BYPASS
+
+[17:34:40] Redis vuelve (sin reiniciar la API)
+  [17:34:40] Levantando Redis...
+  [17:34:41] Redis disponible. Llaves en caché: 0
+  ✔ Redis vuelve vacío (sin persistencia en disco)
+  ✔ la API reconecta: /health reporta redis = up
+
+[17:34:41] La caché se reconstruye desde la BD
+  → GET  /productos/1     200  X-Cache=MISS      1 ms  {"id":1,"nombre":"Teclado mecánico","precio":189900,"stock":15,"actualizado_en":"2026-10-03T21:19:02.396Z"}
+  ✔ primera lectura: MISS
+  → GET  /productos/1     200  X-Cache=HIT       1 ms  {"id":1,"nombre":"Teclado mecánico","precio":189900,"stock":15,"actualizado_en":"2026-10-03T21:19:02.396Z"}
+  ✔ segunda lectura: HIT
+  ✔ HIT y MISS devuelven el mismo cuerpo
+  ✔ la llave producto:1 tiene TTL
+  → GET  /health          200  X-Cache=-         1 ms  {"status":"ok","postgres":"up","redis":"up"}
+  ✔ /health: status = ok
+
+Log de la API durante el caso:
+  [api] GET /productos/1 200 X-Cache=MISS 1.3ms
+  [api] GET /productos/1 200 X-Cache=HIT 0.4ms
+  [cache] error de Redis: Socket closed unexpectedly
+  [cache] error de Redis: ECONNREFUSED
+  [api] GET /productos/1 200 X-Cache=BYPASS 1.2ms
+  [cache] error de Redis: ECONNREFUSED
+  [api] GET /health 200 X-Cache=- 0.7ms
+  [api] GET /productos/1 200 X-Cache=MISS 1.4ms
+  [api] GET /productos/1 200 X-Cache=HIT 0.9ms
+  [api] GET /health 200 X-Cache=- 0.8ms
+
+[17:34:41] CP-08: APROBADO
