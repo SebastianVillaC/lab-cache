@@ -10,6 +10,8 @@ const config = {
   redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6380',
   cacheTtlSeconds: toInt(process.env.CACHE_TTL_SECONDS, 60),
   redisCommandTimeoutMs: toInt(process.env.REDIS_COMMAND_TIMEOUT_MS, 500),
+  // Jest define NODE_ENV=test; se apaga el log por petición para no ensuciar su salida.
+  logPeticiones: process.env.NODE_ENV !== 'test',
 } as const;
 
 export default config;

@@ -2,10 +2,13 @@
 import express from 'express';
 import * as db from './db.ts';
 import * as cache from './cache.ts';
+import { logPeticiones, manejarErrores } from './middlewares.ts';
+import rutasProductos from './rutas-productos.ts';
 
 type Estado = 'up' | 'down';
 
 const app = express();
+app.use(logPeticiones);
 app.use(express.json());
 
 app.get('/health', async (_req, res) => {
@@ -17,10 +20,12 @@ app.get('/health', async (_req, res) => {
   res.status(200).json({ status, postgres, redis });
 });
 
-// TODO(A): rutas /productos según el contrato (docs/estructura-trabajo.md, sección 2).
+app.use('/productos', rutasProductos);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
 });
+
+app.use(manejarErrores);
 
 export default app;
