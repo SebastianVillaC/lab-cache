@@ -12,7 +12,7 @@
     "dev": "node --watch --env-file-if-exists=.env api/src/server.ts",
     "start": "node --env-file-if-exists=.env api/src/server.ts",
     "typecheck": "tsc",
-    "test": "jest --passWithNoTests",
+    "test": "node --env-file-if-exists=.env ./node_modules/jest/bin/jest.js --runInBand",
     "infra:up": "docker compose up -d --wait",
     "infra:down": "docker compose down",
     "infra:reset": "docker compose down -v && docker compose up -d --wait",
@@ -48,8 +48,13 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "testTimeout": 15000,
     "roots": [
       "<rootDir>/tests"
+    ],
+    "reporters": [
+      "default",
+      "<rootDir>/tests/reporter.cjs"
     ],
     "transform": {
       "^.+\\.ts$": [

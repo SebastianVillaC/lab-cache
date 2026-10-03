@@ -1,0 +1,12 @@
+CP-07 · Flujo completo de producto
+Fecha: 2026-10-03T23:12:24.224Z
+Dependencias: PostgreSQL y Redis reales de compose.yaml
+Estado inicial: Redis vacío y productos restaurados a db/init.sql
+
+- POST HTTP 201; recurso creado con id=5
+- GET: MISS → HIT; contenido idéntico
+- PUT HTTP 200; invalidación verificada
+- GET tras actualizar: MISS → HIT; precio=15000.25
+
+Duración: 46.59 ms
+CP-07: APROBADO

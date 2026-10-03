@@ -4,7 +4,7 @@
 **Tema:** Pruebas de una arquitectura con caché (integración entre aplicación, caché y base de datos)
 **Integrantes:** Integrante A · Integrante B · Integrante C
 
-> La estrategia se define **antes** de ejecutar las pruebas (F2). Las secciones 11 a 13 se completan después de F5 y F6.
+> El protocolo y los criterios son explícitos para cada caso; los resultados de las secciones 11 y 12 se actualizaron después de ejecutar las pruebas y revisar sus evidencias.
 
 | # | Elemento | Responsable | Estado |
 |---|---|---|---|
@@ -15,9 +15,9 @@
 | 5 | Riesgos identificados | B | Borrador |
 | 6 | Ambiente necesario | B | Borrador |
 | 7 | Dependencias reales y simuladas | B | Borrador |
-| 8 | Herramientas seleccionadas | C | Pendiente |
-| 9 | Datos de prueba | C | Pendiente |
-| 10 | Criterios de aprobación y fallo | C | Pendiente |
+| 8 | Herramientas seleccionadas | C | Borrador |
+| 9 | Datos de prueba | C | Borrador |
+| 10 | Criterios de aprobación y fallo | C | Borrador |
 
 ---
 
@@ -160,30 +160,66 @@ Precondición común: todos los casos esperan a que `/health` reporte `redis = u
 
 ### Mecanismo de falla para la suite automatizada
 
-> Pendiente — acuerdo B ↔ C (sección 7 de `estructura-trabajo.md`).
-
-**Propuesta de B:** detener y levantar el contenedor real desde la prueba (`docker stop` / `docker start lab-cache-redis` con `child_process`), y antes de cada caso esperar a que `/health` reporte `redis = up`. Es el mismo mecanismo de los escenarios, ya validado. Comparado con las otras opciones:
-
-- **Apuntar el cliente a un puerto inexistente:** solo reproduce el caso de conexión rechazada desde el arranque. No reproduce una caída en caliente ni la recuperación (CP-08), y obliga a crear el cliente de otra forma en las pruebas.
-- **Testcontainers:** aísla mejor, pero agrega una dependencia y su integración con Podman requiere configuración adicional (socket de Podman).
+**Acuerdo B ↔ C implementado:** CP-05 detiene el contenedor real `lab-cache-redis` usando `docker stop`; al terminar, incluso ante un fallo, lo inicia y espera que Redis responda antes de restaurar los datos. Se eligió esta opción porque reproduce una caída en caliente con la misma API y servicios del laboratorio, sin introducir Testcontainers ni sustituir Redis por un mock. Los tests se ejecutan con Jest `--runInBand` para evitar que compartan la BD, Redis o el contenedor durante escenarios concurrentes.
 
 ## 8. Herramientas seleccionadas
 
-> Pendiente (C).
+- **Node.js 24.x** ejecuta la API y carga `.env` al iniciar las pruebas (`node --env-file-if-exists=.env`).
+- **Jest 30** descubre y ejecuta los casos en `tests/integration/` y `tests/system/`; `@swc/jest` transpila TypeScript para Jest.
+- **Supertest 7** prueba el contrato HTTP sobre la app Express en el mismo proceso, sin depender de un puerto HTTP adicional.
+- **PostgreSQL 17 y Redis 7.4 reales**, orquestados por Docker Compose; un cliente Redis administrativo limpia llaves y comprueba TTL.
+- **Docker CLI** provoca CP-05 deteniendo y levantando el contenedor real.
+- **Reporte JSON** generado por el reporter local `tests/reporter.cjs`, sin dependencias externas: `docs/evidencias/reporte-jest.json`. Cada caso automatizado guarda además un archivo de evidencia de texto bajo `docs/evidencias/`.
+- **TypeScript (`tsc`)** comprueba tipos con `npm run typecheck`. No se usan mocks de las integraciones principales.
 
 ## 9. Datos de prueba
 
-> Pendiente (C). Base: registros semilla de `db/init.sql`.
+La fuente de los registros semilla es `db/init.sql`. Antes y después de cada caso, la suite vacía Redis (`FLUSHDB`), trunca `productos` con reinicio de identidad y restaura estos cuatro productos:
+
+| ID | Nombre | Precio | Stock |
+|---:|---|---:|---:|
+| 1 | Teclado mecánico | 189900.00 | 15 |
+| 2 | Mouse inalámbrico | 59900.50 | 40 |
+| 3 | Monitor 24" | 749000.00 | 8 |
+| 4 | Audífonos USB | 99000.00 | 25 |
+
+CP-01 comprueba el producto 1 y su TTL; CP-02 usa el producto 2 y cambia temporalmente el precio; CP-03 envía nombre vacío y valores negativos; CP-04 consulta el ID inexistente 999999; CP-05 consulta el producto 3 con Redis detenido; CP-07 crea un producto independiente, lo consulta y lo actualiza. CP-06 usa el producto 4 para modificar directamente el precio en la BD y comprobar la expiración. CP-08 reinicia Redis y reconstruye desde PostgreSQL. La matriz documenta datos, precondiciones, pasos, resultado y evidencia por caso.
 
 ## 10. Criterios de aprobación y fallo
 
-> Pendiente (C).
+Un caso se aprueba únicamente si cada aserción de su procedimiento coincide con el resultado esperado y queda evidencia del resultado:
+
+- **CP-01:** GET 200 MISS y después 200 HIT; respuestas JSON idénticas; `precio` es numérico y la llave conserva un TTL mayor que cero y no superior a `CACHE_TTL_SECONDS`.
+- **CP-02:** PUT 200; la llave se elimina inmediatamente; el GET posterior es MISS y devuelve el precio actualizado.
+- **CP-03:** POST y PUT inválidos devuelven 400; el registro cacheado permanece idéntico y no se inserta una fila adicional.
+- **CP-04:** GET de ID inexistente devuelve 404 y no crea la llave en Redis.
+- **CP-05:** con el contenedor Redis detenido, GET devuelve 200, `X-Cache: BYPASS`, los datos de PostgreSQL y tarda menos de 1000 ms; el contenedor vuelve a estar disponible al cerrar la prueba.
+- **CP-06:** la lectura antes de vencer el TTL evidencia el valor anterior y el GET tras expirar la llave devuelve MISS y el valor nuevo de la BD.
+- **CP-07:** creación 201, consultas MISS/HIT, actualización 200, invalidación y consultas posteriores MISS/HIT con el contenido actualizado.
+- **CP-08:** Redis reiniciado queda vacío; la API reconecta; el primer GET es MISS, el siguiente HIT y ambos cuerpos son iguales.
+
+Un estado HTTP inesperado, cabecera o cuerpo incorrectos, falta de invalidación/TTL, divergencia no explicada, incumplimiento del umbral de CP-05, dependencia del orden o falta de restauración del entorno hace fallar el caso. Jest devuelve código distinto de cero si cualquier prueba/suite falla; el reporte JSON conserva el error para diagnosticarlo. Un caso manual se marca aprobado solo cuando el guion verifica todos sus pasos y termina en `APROBADO`.
 
 ---
 
 ## 11. Análisis de resultados
 
-> Pendiente (C, con aportes de A y B) — F6.
+Ejecución automatizada del 3 de octubre de 2026, con Node.js 24.21.0 y los servicios reales del Compose:
+
+| Caso | Resultado esperado | Resultado obtenido | Evidencia | Estado |
+|---|---|---|---|---|
+| CP-01 | MISS → HIT, contenido idéntico y TTL vigente | HTTP 200 MISS y HTTP 200 HIT; JSON idéntico; precio numérico; TTL 60 s | `docs/evidencias/CP-01_miss-hit-identicos_automatizado.txt` | Aprobado |
+| CP-02 | PUT invalida la llave y la siguiente lectura actualiza | PUT 200; llave eliminada; GET MISS devuelve precio 60900.5 | `docs/evidencias/CP-02_invalidacion-tras-put_automatizado.txt` | Aprobado |
+| CP-03 | Entrada inválida no persiste ni altera caché | POST y PUT 400; GET sigue siendo HIT con valor original; 4 filas | `docs/evidencias/CP-03_validacion-datos_automatizado.txt` | Aprobado |
+| CP-04 | 404 sin llave cacheada | HTTP 404; `producto:999999` no existe | `docs/evidencias/CP-04_producto-inexistente_automatizado.txt` | Aprobado |
+| CP-05 | Redis detenido: 200 BYPASS desde BD en menos de 1 s | HTTP 200 BYPASS; producto 3 leído de PostgreSQL en 31.65 ms; contenedor restaurado | `docs/evidencias/CP-05_redis-caido-bypass_automatizado.txt` | Aprobado |
+| CP-06 | Dato externo viejo hasta TTL; después lectura nueva | HIT=99000 mientras BD=104000; tras expirar, MISS=104000 | `docs/evidencias/CP-06_dato-desactualizado-ttl.txt` | Aprobado (manual) |
+| CP-07 | Flujo completo y coherente | POST 201; lecturas MISS/HIT; PUT 200; nueva lectura MISS/HIT | `docs/evidencias/CP-07_flujo-completo_automatizado.txt` | Aprobado |
+| CP-08 | Redis reinicia vacío y reconstruye desde BD | Reconexión OK; MISS y luego HIT con cuerpos iguales y TTL | `docs/evidencias/CP-08_recuperacion-redis.txt` | Aprobado (manual) |
+
+El reporte automatizado registra **3 suites aprobadas de 3, 6 pruebas aprobadas de 6 y ninguna fallida**. Las solicitudes medidas en escenarios con log de API dieron estos valores observados: MISS entre 1 y 4 ms; HIT entre 0 y 2 ms; BYPASS entre 1 y 2 ms. La medición automatizada adicional de CP-05 fue 31.65 ms. Son mediciones puntuales locales (no carga ni percentiles); siguen por debajo del umbral de 1000 ms para BYPASS. CP-06 y CP-08 se ejecutaron con sus guiones manuales ya registrados y no forman parte de esas seis pruebas Jest.
+
+La matriz completa de doce campos está en `docs/matriz-casos.csv`. El reporte de suites está en `docs/evidencias/reporte-jest.json`; los archivos individuales contienen las observaciones de cada caso.
 
 ### Hallazgo H-01. Configuración del cliente de Redis ante una falla de la caché
 
@@ -207,7 +243,9 @@ Se midió el tiempo de un `GET` a Redis con dos configuraciones del cliente `red
 
 ## 12. Conclusiones
 
-> Pendiente (C, con aportes de A y B) — F6.
+Las pruebas respaldan los comportamientos previstos para cache-aside: el MISS carga desde PostgreSQL y el HIT conserva el mismo JSON; un PUT invalida el valor viejo; los errores funcionales no se cachean; y con Redis detenido la API sigue respondiendo desde la fuente de verdad con BYPASS dentro del objetivo de un segundo. La recuperación reinicia una caché vacía que se reconstruye en la siguiente lectura.
+
+La suite automatizada cubre CP-01 a CP-05 y CP-07 con PostgreSQL y Redis reales; los escenarios CP-06 y CP-08 aportan la verificación manual del TTL y de la recuperación. Los tiempos observados son pruebas funcionales puntuales y no permiten concluir sobre rendimiento bajo carga. La matriz y los reportes hacen reproducibles los resultados, siempre que las pruebas se ejecuten sobre el entorno local de laboratorio: la suite limpia la base `productos` y vacía Redis, y CP-05 detiene el contenedor.
 
 ## 13. Referencias
 
@@ -218,3 +256,5 @@ Se midió el tiempo de un `GET` a Redis con dos configuraciones del cliente `red
 - Redis. *EXPIRE / TTL*. https://redis.io/docs/latest/commands/expire/
 - node-redis. *Client configuration* (`disableOfflineQueue`, `socket.connectTimeout`, `reconnectStrategy`). https://github.com/redis/node-redis/blob/master/docs/client-configuration.md
 - Microsoft. *Cache-Aside pattern*. https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside
+- Jest. *Configuration: reporters, test sequencing and CLI*. https://jestjs.io/docs/configuration
+- Supertest. *HTTP assertions*. https://github.com/ladjs/supertest

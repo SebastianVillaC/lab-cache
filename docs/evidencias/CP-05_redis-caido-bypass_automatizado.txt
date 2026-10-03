@@ -1,0 +1,12 @@
+CP-05 · Degradación controlada con Redis detenido
+Fecha: 2026-10-03T23:12:21.083Z
+Dependencias: PostgreSQL y Redis reales de compose.yaml
+Estado inicial: Redis vacío y productos restaurados a db/init.sql
+
+- Contenedor detenido: lab-cache-redis
+- GET: HTTP 200, X-Cache=BYPASS, 29.56 ms
+- Producto servido desde PostgreSQL: id=3, precio=749000
+- Redis levantado nuevamente y conexión verificada
+
+Duración: 1875.64 ms
+CP-05: APROBADO

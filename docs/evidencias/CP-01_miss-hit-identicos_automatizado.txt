@@ -1,0 +1,11 @@
+CP-01 · MISS y HIT devuelven el mismo producto
+Fecha: 2026-10-03T23:12:23.601Z
+Dependencias: PostgreSQL y Redis reales de compose.yaml
+Estado inicial: Redis vacío y productos restaurados a db/init.sql
+
+- Primera lectura: HTTP 200, X-Cache=MISS
+- Segunda lectura: HTTP 200, X-Cache=HIT
+- Cuerpo idéntico; precio es number; TTL observado=60 s
+
+Duración: 18.21 ms
+CP-01: APROBADO

@@ -73,11 +73,11 @@ Formato de llave en Redis: `producto:{id}`.
 | Fase | Contenido | Estado |
 |---|---|---|
 | F1. Definición | Tema, arquitectura, stack, reparto | Casi cerrada |
-| F2. Estrategia de pruebas | Documento con los 10 elementos de la sección 7 | Pendiente |
-| F3. Diseño de casos | Matriz de al menos 5 casos con 12 campos, trazados a riesgos | Borrador (CP-01 a CP-08) |
-| F4. Laboratorio | Código de la API, compose, scripts | Infraestructura lista |
-| F5. Automatización y ejecución | Al menos 3 casos automatizados, evidencias | Pendiente |
-| F6. Análisis | Resultados obtenidos, hallazgos, conclusiones | Pendiente |
+| F2. Estrategia de pruebas | Documento con los 10 elementos de la sección 7 | Completa; verificación conjunta pendiente |
+| F3. Diseño de casos | Matriz de 8 casos con 12 campos, trazados a riesgos | Completa en `docs/matriz-casos.csv` |
+| F4. Laboratorio | Código de la API, compose, scripts y guía de inicio | Infraestructura lista; `README.md` agregado |
+| F5. Automatización y ejecución | Al menos 3 casos automatizados, evidencias | Completa: 6 automatizados y 2 escenarios manuales |
+| F6. Análisis | Resultados obtenidos, hallazgos, conclusiones | Completa en `docs/estrategia.md` |
 | F7. Exposición | Diapositivas, video de respaldo, ensayo cronometrado | Pendiente |
 
 Orden obligatorio: F2 y F3 antes que F5. F4 puede avanzar en paralelo con F3 una vez fijado el contrato de la API.
@@ -86,11 +86,11 @@ Orden obligatorio: F2 y F3 antes que F5. F4 puede avanzar en paralelo con F3 una
 
 | Hito | Fecha | Condición de cierre |
 |---|---|---|
-| H1. Estrategia y matriz en borrador | — | F2 y F3 revisadas por los tres |
+| H1. Estrategia y matriz | — | F2 y F3 completadas por C; revisión de los tres pendiente |
 | H2. Laboratorio funcionando | — | `docker compose up` + API responden a los 4 comportamientos |
-| H3. Suite automatizada y evidencias | — | Mínimo 3 casos pasan; evidencias en `docs/evidencias/` |
-| H4. Documento final y presentación | — | Análisis, conclusiones y referencias completos |
-| H5. Ensayo y video de respaldo | — | Ensayo cronometrado en 20 minutos o menos |
+| H3. Suite automatizada y evidencias | — | 6 pruebas automatizadas pasan; 8 casos tienen evidencia |
+| H4. Documento y presentación | — | Estrategia, matriz, resultados y guion de C completados; revisión final y diapositivas integradas pendientes |
+| H5. Ensayo y video de respaldo | — | Pendiente de grabación y ensayo por el equipo |
 
 ---
 
@@ -144,7 +144,7 @@ Los campos *Resultado obtenido*, *Evidencia* y *Estado* se llenan en F5, despué
 | 1 | Presentación | Diapositivas | `docs/presentacion/` | Los tres | F7 |
 | 2 | Diagrama de arquitectura | Componentes + secuencias | `docs/arquitectura/` | A | F1 |
 | 3 | Estrategia de pruebas | Documento | `docs/estrategia.md` | Los tres (por secciones) | F2 |
-| 4 | Matriz de casos | Tabla de 12 campos | `docs/matriz-casos.xlsx` | C | F3–F5 |
+| 4 | Matriz de casos | CSV compatible con Excel, 12 campos | `docs/matriz-casos.csv` | C | F3–F5 |
 | 5 | Código fuente | API y pruebas | `api/`, `tests/` | A, B, C | F4–F5 |
 | 6 | Scripts y configuración | Compose, env, scripts de falla | raíz, `scripts/` | B | F4 |
 | 7 | Instrucciones | Guía de instalación y ejecución | `README.md` | C | F4 |
@@ -168,7 +168,7 @@ lab-cache/
 └── docs/
     ├── arquitectura/       ← 2
     ├── estrategia.md       ← 3, 9, 10
-    ├── matriz-casos.xlsx   ← 4
+    ├── matriz-casos.csv    ← 4
     ├── evidencias/         ← 8
     └── presentacion/       ← 1
 ```
@@ -266,60 +266,36 @@ Este resultado alimenta el análisis de F6.
 
 ### Integrante C — Automatización, evidencias y documentación de pruebas
 
-**Rol:** dueño de la suite de pruebas, la matriz y las evidencias.
+**Estado de entregables (3 de octubre de 2026):** implementación y documentación completadas; revisión conjunta, grabación y exposición presencial quedan a cargo del equipo.
 
-**F2. Estrategia** — redactar:
-- Herramientas seleccionadas.
-- Datos de prueba.
-- Criterios de aprobación y fallo.
+**F2. Estrategia — completada** en `docs/estrategia.md`: herramientas, datos de prueba y criterios de aprobación/fallo están documentados.
 
-**F3. Casos**
-- Construir la matriz con los 12 campos para todos los casos.
-- Vincular cada caso con su riesgo y su punto de integración.
-- Clasificar cada caso como integración o sistema.
+**F3. Casos — completada** en `docs/matriz-casos.csv`: ocho casos contienen los 12 campos, trazabilidad a riesgos y puntos de integración, clasificación integración/sistema y resultado, evidencia y estado.
 
-**F4. Laboratorio** — escribir `README.md` con prerrequisitos, instalación, arranque, ejecución de pruebas y reproducción de los escenarios de falla.
+**F4. Guía — completada** en `README.md`: prerequisitos, instalación, arranque, pruebas, límites destructivos del entorno local y reproducción de los escenarios Bash.
 
-**F5. Automatización y ejecución**
-- Configurar Jest + Supertest con carpetas `tests/integration/` y `tests/system/`.
-- Implementar `setup` y `teardown` para cada prueba: limpiar Redis (`FLUSHDB`) y restaurar los datos de la BD, de modo que las pruebas no dependan del orden de ejecución.
-- Automatizar como mínimo CP-01, CP-03 y CP-05; luego CP-02, CP-04 y CP-07.
-- Definir con B el mecanismo para provocar la caída de Redis desde la prueba:
-  - Detener el contenedor.
-  - Apuntar el cliente a un puerto inexistente.
-  - Usar Testcontainers.
-- Generar el reporte de ejecución (por ejemplo, `jest-junit` o un reporte HTML).
-- Organizar las evidencias en `docs/evidencias/` con la nomenclatura `CP-XX_descripcion.ext`.
-- Completar en la matriz los campos *Resultado obtenido*, *Evidencia* y *Estado*.
-- Grabar el video de respaldo de la demo.
+**F5. Automatización y ejecución — completada**
+- Jest + Supertest separados en `tests/integration/` y `tests/system/`.
+- `tests/helpers.ts` prepara y restaura Redis y las cuatro filas semilla antes y después de cada caso; la suite corre secuencialmente con `--runInBand`.
+- Automatizados CP-01, CP-02, CP-03, CP-04, CP-05 y CP-07 con PostgreSQL y Redis reales. CP-05 detiene el contenedor y siempre lo restaura.
+- Reporte JSON propio en `docs/evidencias/reporte-jest.json`; una evidencia por caso automatizado en `docs/evidencias/`. CP-02, CP-05, CP-06 y CP-08 tienen además las evidencias de los guiones manuales.
+- Ejecución comprobada: 3 suites y 6 pruebas aprobadas; `npm run typecheck` pasa.
 
-**F6. Análisis**
-- Tabla de resultado esperado vs. obtenido.
-- Tiempos de respuesta HIT / MISS / BYPASS.
-- Hallazgos (incluido el de B sobre la configuración del cliente).
-- Conclusiones.
+**F6. Análisis — completado** en `docs/estrategia.md`: tabla esperado/obtenido, mediciones puntuales HIT/MISS/BYPASS, hallazgo H-01, límites y conclusiones.
 
-**Exposición**
-- Resultados, hallazgos y conclusiones (3 min).
-- En la demo: ejecución de la suite e interpretación del reporte.
+**Exposición preparada:** `docs/presentacion/integrante-c.md` contiene el guion y contenido de tres minutos para resultados, hallazgos y conclusiones. La integración de diapositivas al material común, la ejecución presencial de la demo, el ensayo y la grabación del video de respaldo no se pueden realizar desde el repositorio y quedan pendientes para el equipo.
 
-**Debe poder explicar:**
-- Diferencia entre prueba de integración y prueba de sistema, y por qué cada caso está clasificado así.
-- Cómo cada prueba garantiza su estado inicial.
-- Cómo la prueba de CP-05 provoca la caída de Redis.
-- Cómo se interpreta un reporte con casos fallidos.
-
-**Terminado cuando:** `npm test` ejecuta la suite completa sobre un entorno limpio, la matriz está completa y cada caso tiene su evidencia.
+**Conceptos para explicar:** integración comprueba colaboraciones API–BD–Redis; sistema valida el flujo real con los contenedores. El estado inicial se restablece con `FLUSHDB` y truncado/siembra de la tabla. CP-05 detiene el contenedor Docker real y verifica 200/BYPASS en menos de un segundo. El reporte JSON indica suites, casos, duración y mensajes de fallo; el código de salida distinto de cero señala una ejecución fallida.
 
 ---
 
 ### Tareas compartidas
 
-- **Revisión cruzada de código.** A revisa lo de B, B lo de C y C lo de A. El objetivo es que cada integrante pueda responder preguntas sobre las tres partes (secciones 3 y 15 de la guía).
-- **Referencias.** Cada integrante aporta las fuentes de su parte.
-- **Presentación.** Cada integrante arma las diapositivas de su segmento.
-- **Ensayo.** Al menos un ensayo completo cronometrado, con el laboratorio corriendo desde cero en un equipo distinto al de desarrollo.
-- **Copia de respaldo.** Repositorio y carpeta comprimida disponibles el día de la exposición.
+- **Revisión cruzada de código.** Pendiente: C debe revisar la parte de A y el equipo debe confirmar que todos pueden responder preguntas sobre las tres partes (secciones 3 y 15 de la guía).
+- **Referencias.** C aportó las fuentes de Jest y Supertest en `docs/estrategia.md`; A y B completan/revisan las fuentes de sus secciones.
+- **Presentación.** El guion del segmento de C está preparado en `docs/presentacion/integrante-c.md`; falta integrar y revisar las diapositivas del equipo.
+- **Ensayo.** Pendiente: ensayo completo cronometrado, con el laboratorio desde cero en otro equipo.
+- **Copia de respaldo.** El equipo debe preparar el repositorio y la carpeta comprimida para el día de la exposición.
 
 ---
 
@@ -329,7 +305,7 @@ Este resultado alimenta el análisis de F6.
 |---|---|---|---|
 | Contrato de la API | A ↔ C | Antes de F4 | Rutas, códigos de estado, cuerpo de respuesta, header `X-Cache` |
 | Interfaz del módulo de caché | A ↔ B | Antes de F4 | `get(key)`, `set(key, value, ttl)`, `del(key)`; no lanzan excepciones y retornan un estado que indica HIT, MISS o fallo |
-| Mecanismo de falla en pruebas | B ↔ C | Inicio de F5 | Cómo se detiene o simula Redis desde la suite |
+| Mecanismo de falla en pruebas | B ↔ C | Inicio de F5 | Acordado e implementado: detener/restaurar `lab-cache-redis` con Docker desde CP-05 |
 | Datos de prueba | A ↔ C | F3 | Registros semilla de `init.sql` y estado esperado antes de cada caso |
 
 ---
