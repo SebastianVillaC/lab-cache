@@ -1,4 +1,4 @@
-// Validación de entrada (dueño: Integrante A). Funciones puras: no tocan la BD ni la caché.
+// Validación de entrada. Funciones puras: no tocan la BD ni la caché.
 import type { DatosProducto } from './productos.ts';
 
 export type Validacion<T> = { ok: true; valor: T } | { ok: false; errores: string[] };

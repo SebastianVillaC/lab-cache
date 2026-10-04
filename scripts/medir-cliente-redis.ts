@@ -1,4 +1,4 @@
-// Hallazgo de B: tiempo de un GET a Redis cuando la caché falla, con dos configuraciones del cliente.
+// Hallazgo H-01: tiempo de un GET a Redis cuando la caché falla, con dos configuraciones del cliente.
 //
 //   - Por defecto: createClient({ url }) sin más opciones. La cola fuera de línea está activa y no
 //     hay timeout por comando, así que el comando espera a que Redis vuelva.

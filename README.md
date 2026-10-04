@@ -8,6 +8,7 @@ API REST de productos con PostgreSQL como fuente de verdad y Redis como caché *
 - Docker Desktop iniciado y con Docker Compose disponible.
 - PowerShell en Windows (o una terminal compatible).
 - Puertos 3000, 5433 y 6380 disponibles.
+- Solo para los escenarios manuales (`scripts/`): Bash, `curl` y [`jq`](https://jqlang.org/). En Windows, Git Bash o WSL; `jq` no viene incluido en Git Bash y se instala con `winget install jqlang.jq` (macOS: `brew install jq`; Linux: `apt install jq`).
 
 La configuración local está en `.env.example`. Las pruebas usan los servicios reales de Compose y restauran la tabla `productos` a los cuatro registros semilla y vacían Redis antes y después de cada caso. Ejecútalas solo contra el entorno de laboratorio: el puerto Redis usa `FLUSHDB` y CP-05 detiene el contenedor `lab-cache-redis`.
 
@@ -51,7 +52,7 @@ CP-05 detiene y vuelve a iniciar el contenedor Redis mediante Docker. Se necesit
 
 ## Casos y resultados
 
-La matriz con los 12 campos exigidos y el vínculo con riesgos/puntos de integración está en [`docs/matriz-casos.csv`](docs/matriz-casos.csv); se puede abrir con Excel. Los scripts de escenario mantienen evidencias manuales en `docs/evidencias/`.
+La matriz con los 12 campos exigidos y el vínculo con riesgos/puntos de integración está en [`docs/matriz-casos.xlsx`](docs/matriz-casos.xlsx). Los scripts de escenario mantienen evidencias manuales en `docs/evidencias/`.
 
 | Caso | Comprobación | Tipo | Automatizado |
 |---|---|---|---|
@@ -82,7 +83,6 @@ Para ver llaves y TTL usa `npm run redis:inspeccionar`. Los datos directos de de
 - Reporte automático: `docs/evidencias/reporte-jest.json`.
 - Evidencias por caso: `docs/evidencias/CP-XX_*`.
 - Resultados observados, tiempos HIT/MISS/BYPASS, hallazgo del cliente Redis y conclusiones: `docs/estrategia.md`.
-- Notas del segmento de resultados de C: `docs/presentacion/integrante-c.md`.
-- Guion y distribución de tareas: `docs/estructura-trabajo.md`.
+- Diagramas de arquitectura (componentes y secuencias): `docs/arquitectura/`.
 
-Las duraciones de solicitudes automatizadas se registran en sus evidencias; la suite no interpreta las mediciones como una prueba de carga. El video de respaldo y la exposición deben grabarse/realizarse por el equipo.
+Las duraciones de solicitudes automatizadas se registran en sus evidencias; la suite no interpreta las mediciones como una prueba de carga.

@@ -1,8 +1,6 @@
-// Módulo de caché (dueño: Integrante B).
-//
-// Interfaz acordada A ↔ B (docs/estructura-trabajo.md, sección 7): ninguna función lanza
-// excepciones; ante un fallo de Redis devuelven status 'ERROR' y la API responde X-Cache: BYPASS.
-// Cada comando tiene un tope de REDIS_COMMAND_TIMEOUT_MS para que una caché lenta no bloquee la API.
+// Módulo de caché. Ninguna función lanza excepciones: ante un fallo de Redis devuelven status
+// 'ERROR' y la API responde X-Cache: BYPASS. Cada comando tiene un tope de
+// REDIS_COMMAND_TIMEOUT_MS para que una caché lenta no bloquee la API.
 import { createClient } from 'redis';
 import config from './config.ts';
 

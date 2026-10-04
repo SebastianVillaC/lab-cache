@@ -72,9 +72,9 @@ Formato de llave en Redis: `producto:{id}`.
 
 | Fase | Contenido | Estado |
 |---|---|---|
-| F1. Definición | Tema, arquitectura, stack, reparto | Casi cerrada |
+| F1. Definición | Tema, arquitectura, stack, reparto | Completa; diagramas en `docs/arquitectura/` |
 | F2. Estrategia de pruebas | Documento con los 10 elementos de la sección 7 | Completa; verificación conjunta pendiente |
-| F3. Diseño de casos | Matriz de 8 casos con 12 campos, trazados a riesgos | Completa en `docs/matriz-casos.csv` |
+| F3. Diseño de casos | Matriz de 8 casos con 12 campos, trazados a riesgos | Completa en `docs/matriz-casos.xlsx` |
 | F4. Laboratorio | Código de la API, compose, scripts y guía de inicio | Infraestructura lista; `README.md` agregado |
 | F5. Automatización y ejecución | Al menos 3 casos automatizados, evidencias | Completa: 6 automatizados y 2 escenarios manuales |
 | F6. Análisis | Resultados obtenidos, hallazgos, conclusiones | Completa en `docs/estrategia.md` |
@@ -89,7 +89,7 @@ Orden obligatorio: F2 y F3 antes que F5. F4 puede avanzar en paralelo con F3 una
 | H1. Estrategia y matriz | — | F2 y F3 completadas por C; revisión de los tres pendiente |
 | H2. Laboratorio funcionando | — | `docker compose up` + API responden a los 4 comportamientos |
 | H3. Suite automatizada y evidencias | — | 6 pruebas automatizadas pasan; 8 casos tienen evidencia |
-| H4. Documento y presentación | — | Estrategia, matriz, resultados y guion de C completados; revisión final y diapositivas integradas pendientes |
+| H4. Documento y presentación | — | Estrategia, matriz y resultados completados; diapositivas y guiones de la exposición pendientes |
 | H5. Ensayo y video de respaldo | — | Pendiente de grabación y ensayo por el equipo |
 
 ---
@@ -144,7 +144,7 @@ Los campos *Resultado obtenido*, *Evidencia* y *Estado* se llenan en F5, despué
 | 1 | Presentación | Diapositivas | `docs/presentacion/` | Los tres | F7 |
 | 2 | Diagrama de arquitectura | Componentes + secuencias | `docs/arquitectura/` | A | F1 |
 | 3 | Estrategia de pruebas | Documento | `docs/estrategia.md` | Los tres (por secciones) | F2 |
-| 4 | Matriz de casos | CSV compatible con Excel, 12 campos | `docs/matriz-casos.csv` | C | F3–F5 |
+| 4 | Matriz de casos | Tabla de 12 campos | `docs/matriz-casos.xlsx` | C | F3–F5 |
 | 5 | Código fuente | API y pruebas | `api/`, `tests/` | A, B, C | F4–F5 |
 | 6 | Scripts y configuración | Compose, env, scripts de falla | raíz, `scripts/` | B | F4 |
 | 7 | Instrucciones | Guía de instalación y ejecución | `README.md` | C | F4 |
@@ -168,7 +168,7 @@ lab-cache/
 └── docs/
     ├── arquitectura/       ← 2
     ├── estrategia.md       ← 3, 9, 10
-    ├── matriz-casos.csv    ← 4
+    ├── matriz-casos.xlsx   ← 4
     ├── evidencias/         ← 8
     └── presentacion/       ← 1
 ```
@@ -180,6 +180,12 @@ Las pruebas se separan en `integration/` y `system/` para que la clasificación 
 ## 6. Responsabilidades por integrante
 
 ### Integrante A — API y persistencia
+
+**Estado de entregables (4 de octubre de 2026):** F1, F2 y F4 completadas.
+- **F1:** diagrama de componentes y cuatro diagramas de secuencia en `docs/arquitectura/` (PNG exportados desde draw.io).
+- **F2:** secciones 1 a 3 de `docs/estrategia.md` (objetivo, componentes, alcance y exclusiones) y referencias de la parte de A.
+- **F4:** endpoints del contrato, acceso a datos parametrizado, validación, normalización de tipos, middleware de errores y log por petición (`api/src/`). CP-01, CP-03, CP-04 y CP-07 los verifican.
+- **Pendiente:** revisión cruzada del código de B, diapositivas del segmento de A y ensayo.
 
 **Rol:** dueño de la aplicación y de su integración con PostgreSQL (PI-2, PI-3).
 
@@ -270,7 +276,7 @@ Este resultado alimenta el análisis de F6.
 
 **F2. Estrategia — completada** en `docs/estrategia.md`: herramientas, datos de prueba y criterios de aprobación/fallo están documentados.
 
-**F3. Casos — completada** en `docs/matriz-casos.csv`: ocho casos contienen los 12 campos, trazabilidad a riesgos y puntos de integración, clasificación integración/sistema y resultado, evidencia y estado.
+**F3. Casos — completada** en `docs/matriz-casos.xlsx`: ocho casos contienen los 12 campos, trazabilidad a riesgos y puntos de integración, clasificación integración/sistema y resultado, evidencia y estado.
 
 **F4. Guía — completada** en `README.md`: prerequisitos, instalación, arranque, pruebas, límites destructivos del entorno local y reproducción de los escenarios Bash.
 
@@ -283,7 +289,7 @@ Este resultado alimenta el análisis de F6.
 
 **F6. Análisis — completado** en `docs/estrategia.md`: tabla esperado/obtenido, mediciones puntuales HIT/MISS/BYPASS, hallazgo H-01, límites y conclusiones.
 
-**Exposición preparada:** `docs/presentacion/integrante-c.md` contiene el guion y contenido de tres minutos para resultados, hallazgos y conclusiones. La integración de diapositivas al material común, la ejecución presencial de la demo, el ensayo y la grabación del video de respaldo no se pueden realizar desde el repositorio y quedan pendientes para el equipo.
+**Exposición — pendiente (F7):** guion y diapositivas del segmento de resultados, hallazgos y conclusiones (3 min). La integración de diapositivas al material común, la ejecución presencial de la demo, el ensayo y la grabación del video de respaldo quedan pendientes para el equipo.
 
 **Conceptos para explicar:** integración comprueba colaboraciones API–BD–Redis; sistema valida el flujo real con los contenedores. El estado inicial se restablece con `FLUSHDB` y truncado/siembra de la tabla. CP-05 detiene el contenedor Docker real y verifica 200/BYPASS en menos de un segundo. El reporte JSON indica suites, casos, duración y mensajes de fallo; el código de salida distinto de cero señala una ejecución fallida.
 
@@ -291,9 +297,9 @@ Este resultado alimenta el análisis de F6.
 
 ### Tareas compartidas
 
-- **Revisión cruzada de código.** Pendiente: C debe revisar la parte de A y el equipo debe confirmar que todos pueden responder preguntas sobre las tres partes (secciones 3 y 15 de la guía).
-- **Referencias.** C aportó las fuentes de Jest y Supertest en `docs/estrategia.md`; A y B completan/revisan las fuentes de sus secciones.
-- **Presentación.** El guion del segmento de C está preparado en `docs/presentacion/integrante-c.md`; falta integrar y revisar las diapositivas del equipo.
+- **Revisión cruzada de código.** Pendiente: A revisa la parte de B, B la de C y C la de A; el equipo debe confirmar que todos pueden responder preguntas sobre las tres partes (secciones 3 y 15 de la guía).
+- **Referencias.** Completas en `docs/estrategia.md`, sección 13: B aportó las de Redis y cache-aside, C las de Jest y Supertest, y A las de Express, node-postgres y HTTP.
+- **Presentación.** Pendiente: cada integrante arma las diapositivas de su segmento y luego se integran y revisan en `docs/presentacion/`.
 - **Ensayo.** Pendiente: ensayo completo cronometrado, con el laboratorio desde cero en otro equipo.
 - **Copia de respaldo.** El equipo debe preparar el repositorio y la carpeta comprimida para el día de la exposición.
 

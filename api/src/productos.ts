@@ -1,4 +1,4 @@
-// Acceso a datos de productos (dueño: Integrante A). Todas las consultas son parametrizadas.
+// Acceso a datos de productos. Todas las consultas son parametrizadas.
 import * as db from './db.ts';
 
 export type Producto = {

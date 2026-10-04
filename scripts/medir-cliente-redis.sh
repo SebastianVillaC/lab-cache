@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hallazgo de B: compara la configuración por defecto del cliente de Redis con la del laboratorio
+# Hallazgo H-01: compara la configuración por defecto del cliente de Redis con la del laboratorio
 # en dos fallas de la caché. Redis se restaura al terminar, aunque la medición falle.
 #   detenido  → docker stop  (conexión rechazada)
 #   congelado → docker pause (la conexión sigue abierta pero Redis no responde: caché lenta)

@@ -1,6 +1,5 @@
-// Rutas /productos con patrón cache-aside (dueño: Integrante A).
-// El módulo de caché no lanza excepciones (contrato A ↔ B): un fallo de Redis llega como
-// status 'ERROR' y aquí se traduce en X-Cache: BYPASS.
+// Rutas /productos con patrón cache-aside. El módulo de caché no lanza excepciones: un fallo
+// de Redis llega como status 'ERROR' y aquí se traduce en X-Cache: BYPASS.
 import { Router } from 'express';
 import * as cache from './cache.ts';
 import * as productos from './productos.ts';
@@ -9,15 +8,13 @@ import { validarId, validarProducto } from './validacion.ts';
 
 const router = Router();
 
-const llave = (id: number): string => `producto:${id}`;
-
 router.get('/:id', async (req, res) => {
   const id = validarId(req.params.id);
   if (!id.ok) {
     res.status(400).json({ error: 'id inválido', detalles: id.errores });
     return;
   }
-  const key = llave(id.valor);
+  const key = cache.claveProducto(id.valor);
 
   const enCache = await cache.get<Producto>(key);
   if (enCache.status === 'HIT') {
@@ -74,7 +71,7 @@ router.put('/:id', async (req, res) => {
   }
 
   // Se invalida después de escribir en la BD (R1). Si falla, el dato viejo vive hasta el TTL.
-  const key = llave(id.valor);
+  const key = cache.claveProducto(id.valor);
   const borrado = await cache.del(key);
   if (borrado.status === 'ERROR') {
     console.warn(

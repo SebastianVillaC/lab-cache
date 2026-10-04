@@ -1,5 +1,5 @@
 CP-07 · Flujo completo de producto
-Fecha: 2026-10-03T23:12:24.224Z
+Fecha: 2026-10-04T20:10:53.501Z
 Dependencias: PostgreSQL y Redis reales de compose.yaml
 Estado inicial: Redis vacío y productos restaurados a db/init.sql
 
@@ -8,5 +8,5 @@ Estado inicial: Redis vacío y productos restaurados a db/init.sql
 - PUT HTTP 200; invalidación verificada
 - GET tras actualizar: MISS → HIT; precio=15000.25
 
-Duración: 46.59 ms
+Duración: 12.65 ms
 CP-07: APROBADO

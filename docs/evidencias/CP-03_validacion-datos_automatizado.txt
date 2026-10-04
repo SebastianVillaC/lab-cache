@@ -1,5 +1,5 @@
 CP-03 · Validación de POST y PUT inválidos
-Fecha: 2026-10-03T23:12:23.711Z
+Fecha: 2026-10-04T20:10:53.294Z
 Dependencias: PostgreSQL y Redis reales de compose.yaml
 Estado inicial: Redis vacío y productos restaurados a db/init.sql
 
@@ -7,5 +7,5 @@ Estado inicial: Redis vacío y productos restaurados a db/init.sql
 - PUT inválido: HTTP 400
 - Caché intacta (HIT) y productos en BD=4
 
-Duración: 27.14 ms
+Duración: 5.21 ms
 CP-03: APROBADO

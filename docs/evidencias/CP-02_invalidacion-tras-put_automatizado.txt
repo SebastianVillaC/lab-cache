@@ -1,10 +1,10 @@
 CP-02 · PUT invalida la caché
-Fecha: 2026-10-03T23:12:23.646Z
+Fecha: 2026-10-04T20:10:53.272Z
 Dependencias: PostgreSQL y Redis reales de compose.yaml
 Estado inicial: Redis vacío y productos restaurados a db/init.sql
 
 - PUT: HTTP 200; llave invalidada=true
 - GET posterior: HTTP 200, X-Cache=MISS, precio=60900.5
 
-Duración: 38.78 ms
+Duración: 13.20 ms
 CP-02: APROBADO

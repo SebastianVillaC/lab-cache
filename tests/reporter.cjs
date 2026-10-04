@@ -1,5 +1,5 @@
 const { mkdirSync, writeFileSync } = require('node:fs');
-const { dirname, resolve } = require('node:path');
+const { dirname, relative, resolve } = require('node:path');
 
 class EvidenciaReporter {
   onRunComplete(_contexts, results) {
@@ -16,7 +16,8 @@ class EvidenciaReporter {
         duracionMs: results.startTime ? Date.now() - results.startTime : null,
       },
       suites: results.testResults.map((suite) => ({
-        archivo: suite.name || suite.testFilePath,
+        // Ruta relativa al repo: la absoluta expone la carpeta personal de quien ejecuta la suite.
+        archivo: relative(process.cwd(), suite.testFilePath).split('\\').join('/'),
         resultado: suite.status,
         pruebas: suite.testResults.map((test) => ({
           nombre: test.fullName,

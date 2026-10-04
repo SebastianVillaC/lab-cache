@@ -1,5 +1,5 @@
 {
-  "fecha": "2026-10-03T23:12:24.291Z",
+  "fecha": "2026-10-04T20:10:54.208Z",
   "resultado": "APROBADO",
   "resumen": {
     "suites": 3,
@@ -8,56 +8,56 @@
     "pruebas": 6,
     "pruebasPasadas": 6,
     "pruebasFallidas": 0,
-    "duracionMs": 4309
+    "duracionMs": 1398
   },
   "suites": [
     {
-      "archivo": "C:\\Users\\Robin Montoya\\OneDrive - INSTITUTO TECNOLOGICO METROPOLITANO - ITM\\Documents\\cache\\lab-cache\\tests\\integration\\redis-caido.test.ts",
-      "pruebas": [
-        {
-          "nombre": "Pruebas de integración · degradación de Redis CP-05: Redis detenido produce BYPASS desde PostgreSQL en menos de 1 s",
-          "resultado": "passed",
-          "duracionMs": 1973,
-          "errores": []
-        }
-      ]
-    },
-    {
-      "archivo": "C:\\Users\\Robin Montoya\\OneDrive - INSTITUTO TECNOLOGICO METROPOLITANO - ITM\\Documents\\cache\\lab-cache\\tests\\integration\\productos.test.ts",
+      "archivo": "tests/integration/productos.test.ts",
       "pruebas": [
         {
           "nombre": "Pruebas de integración · API, Redis y PostgreSQL CP-01: primera lectura MISS y segunda HIT con contenido idéntico",
           "resultado": "passed",
-          "duracionMs": 63,
+          "duracionMs": 33,
           "errores": []
         },
         {
           "nombre": "Pruebas de integración · API, Redis y PostgreSQL CP-02: PUT invalida la caché y la lectura posterior devuelve el dato nuevo",
           "resultado": "passed",
-          "duracionMs": 64,
+          "duracionMs": 22,
           "errores": []
         },
         {
           "nombre": "Pruebas de integración · API, Redis y PostgreSQL CP-03: datos inválidos responden 400 y no alteran la caché ni la BD",
           "resultado": "passed",
-          "duracionMs": 53,
+          "duracionMs": 13,
           "errores": []
         },
         {
           "nombre": "Pruebas de integración · API, Redis y PostgreSQL CP-04: producto inexistente responde 404 y no se cachea",
           "resultado": "passed",
-          "duracionMs": 36,
+          "duracionMs": 7,
           "errores": []
         }
       ]
     },
     {
-      "archivo": "C:\\Users\\Robin Montoya\\OneDrive - INSTITUTO TECNOLOGICO METROPOLITANO - ITM\\Documents\\cache\\lab-cache\\tests\\system\\flujo.test.ts",
+      "archivo": "tests/system/flujo.test.ts",
       "pruebas": [
         {
           "nombre": "Pruebas de sistema · servicio desplegado en proceso y contenedores reales CP-07: flujo completo crear, consultar, actualizar y volver a consultar",
           "resultado": "passed",
-          "duracionMs": 87,
+          "duracionMs": 25,
+          "errores": []
+        }
+      ]
+    },
+    {
+      "archivo": "tests/integration/redis-caido.test.ts",
+      "pruebas": [
+        {
+          "nombre": "Pruebas de integración · degradación de Redis CP-05: Redis detenido produce BYPASS desde PostgreSQL en menos de 1 s",
+          "resultado": "passed",
+          "duracionMs": 482,
           "errores": []
         }
       ]

@@ -8,16 +8,16 @@
 
 | # | Elemento | Responsable | Estado |
 |---|---|---|---|
-| 1 | Objetivo de las pruebas | A | Borrador |
-| 2 | Componentes incluidos | A | Borrador |
-| 3 | Alcance y exclusiones | A | Borrador |
-| 4 | Puntos de integración | B | Borrador |
-| 5 | Riesgos identificados | B | Borrador |
-| 6 | Ambiente necesario | B | Borrador |
-| 7 | Dependencias reales y simuladas | B | Borrador |
-| 8 | Herramientas seleccionadas | C | Borrador |
-| 9 | Datos de prueba | C | Borrador |
-| 10 | Criterios de aprobación y fallo | C | Borrador |
+| 1 | Objetivo de las pruebas | A | Completo |
+| 2 | Componentes incluidos | A | Completo |
+| 3 | Alcance y exclusiones | A | Completo |
+| 4 | Puntos de integración | B | Completo |
+| 5 | Riesgos identificados | B | Completo |
+| 6 | Ambiente necesario | B | Completo |
+| 7 | Dependencias reales y simuladas | B | Completo |
+| 8 | Herramientas seleccionadas | C | Completo |
+| 9 | Datos de prueba | C | Completo |
+| 10 | Criterios de aprobación y fallo | C | Completo |
 
 ---
 
@@ -204,7 +204,7 @@ Un estado HTTP inesperado, cabecera o cuerpo incorrectos, falta de invalidación
 
 ## 11. Análisis de resultados
 
-Ejecución automatizada del 3 de octubre de 2026, con Node.js 24.21.0 y los servicios reales del Compose:
+Ejecución automatizada del 4 de octubre de 2026 sobre un entorno limpio (`npm run infra:reset`), con Node.js 24.15.0 y los servicios reales del Compose:
 
 | Caso | Resultado esperado | Resultado obtenido | Evidencia | Estado |
 |---|---|---|---|---|
@@ -212,14 +212,14 @@ Ejecución automatizada del 3 de octubre de 2026, con Node.js 24.21.0 y los serv
 | CP-02 | PUT invalida la llave y la siguiente lectura actualiza | PUT 200; llave eliminada; GET MISS devuelve precio 60900.5 | `docs/evidencias/CP-02_invalidacion-tras-put_automatizado.txt` | Aprobado |
 | CP-03 | Entrada inválida no persiste ni altera caché | POST y PUT 400; GET sigue siendo HIT con valor original; 4 filas | `docs/evidencias/CP-03_validacion-datos_automatizado.txt` | Aprobado |
 | CP-04 | 404 sin llave cacheada | HTTP 404; `producto:999999` no existe | `docs/evidencias/CP-04_producto-inexistente_automatizado.txt` | Aprobado |
-| CP-05 | Redis detenido: 200 BYPASS desde BD en menos de 1 s | HTTP 200 BYPASS; producto 3 leído de PostgreSQL en 31.65 ms; contenedor restaurado | `docs/evidencias/CP-05_redis-caido-bypass_automatizado.txt` | Aprobado |
+| CP-05 | Redis detenido: 200 BYPASS desde BD en menos de 1 s | HTTP 200 BYPASS; producto 3 leído de PostgreSQL en 12.05 ms; contenedor restaurado | `docs/evidencias/CP-05_redis-caido-bypass_automatizado.txt` | Aprobado |
 | CP-06 | Dato externo viejo hasta TTL; después lectura nueva | HIT=99000 mientras BD=104000; tras expirar, MISS=104000 | `docs/evidencias/CP-06_dato-desactualizado-ttl.txt` | Aprobado (manual) |
 | CP-07 | Flujo completo y coherente | POST 201; lecturas MISS/HIT; PUT 200; nueva lectura MISS/HIT | `docs/evidencias/CP-07_flujo-completo_automatizado.txt` | Aprobado |
 | CP-08 | Redis reinicia vacío y reconstruye desde BD | Reconexión OK; MISS y luego HIT con cuerpos iguales y TTL | `docs/evidencias/CP-08_recuperacion-redis.txt` | Aprobado (manual) |
 
-El reporte automatizado registra **3 suites aprobadas de 3, 6 pruebas aprobadas de 6 y ninguna fallida**. Las solicitudes medidas en escenarios con log de API dieron estos valores observados: MISS entre 1 y 4 ms; HIT entre 0 y 2 ms; BYPASS entre 1 y 2 ms. La medición automatizada adicional de CP-05 fue 31.65 ms. Son mediciones puntuales locales (no carga ni percentiles); siguen por debajo del umbral de 1000 ms para BYPASS. CP-06 y CP-08 se ejecutaron con sus guiones manuales ya registrados y no forman parte de esas seis pruebas Jest.
+El reporte automatizado registra **3 suites aprobadas de 3, 6 pruebas aprobadas de 6 y ninguna fallida**. Las solicitudes medidas en escenarios con log de API dieron estos valores observados: MISS entre 1 y 4 ms; HIT entre 0 y 2 ms; BYPASS entre 1 y 2 ms. La medición automatizada adicional de CP-05 fue 12.05 ms. Son mediciones puntuales locales (no carga ni percentiles); siguen por debajo del umbral de 1000 ms para BYPASS. CP-06 y CP-08 se ejecutaron con sus guiones manuales ya registrados y no forman parte de esas seis pruebas Jest.
 
-La matriz completa de doce campos está en `docs/matriz-casos.csv`. El reporte de suites está en `docs/evidencias/reporte-jest.json`; los archivos individuales contienen las observaciones de cada caso.
+La matriz completa de doce campos está en `docs/matriz-casos.xlsx`. El reporte de suites está en `docs/evidencias/reporte-jest.json`; los archivos individuales contienen las observaciones de cada caso.
 
 ### Hallazgo H-01. Configuración del cliente de Redis ante una falla de la caché
 
@@ -258,3 +258,7 @@ La suite automatizada cubre CP-01 a CP-05 y CP-07 con PostgreSQL y Redis reales;
 - Microsoft. *Cache-Aside pattern*. https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside
 - Jest. *Configuration: reporters, test sequencing and CLI*. https://jestjs.io/docs/configuration
 - Supertest. *HTTP assertions*. https://github.com/ladjs/supertest
+- Express. *Error handling* (manejo de errores y rechazos de handlers async en Express 5). https://expressjs.com/en/guide/error-handling.html
+- node-postgres. *Queries* (consultas parametrizadas). https://node-postgres.com/features/queries
+- node-postgres. *Data types* (`NUMERIC` devuelto como string). https://node-postgres.com/features/types
+- IETF. *RFC 9110: HTTP Semantics* (métodos y códigos de estado). https://www.rfc-editor.org/rfc/rfc9110
