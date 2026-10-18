@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "node --watch --env-file-if-exists=.env api/src/server.ts",
     "start": "node --env-file-if-exists=.env api/src/server.ts",
+    "demo:api": "node --env-file-if-exists=.env --env-file=.env.demo api/src/server.ts",
     "typecheck": "tsc",
     "test": "node --env-file-if-exists=.env ./node_modules/jest/bin/jest.js --runInBand",
     "infra:up": "docker compose up -d --wait",
@@ -27,7 +28,9 @@
     "escenario:cp-02": "scripts/escenarios/cp-02-invalidacion.sh",
     "escenario:cp-05": "scripts/escenarios/cp-05-redis-caido.sh",
     "escenario:cp-06": "scripts/escenarios/cp-06-dato-desactualizado.sh",
-    "escenario:cp-08": "scripts/escenarios/cp-08-recuperacion.sh"
+    "escenario:cp-08": "scripts/escenarios/cp-08-recuperacion.sh",
+    "demo:cp-06": "scripts/escenarios/cp-06-dato-desactualizado.sh --paso-a-paso",
+    "demo:cp-08": "scripts/escenarios/cp-08-recuperacion.sh --paso-a-paso"
   },
   "dependencies": {
     "express": "5.2.1",

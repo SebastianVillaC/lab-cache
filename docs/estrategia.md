@@ -2,22 +2,22 @@
 
 **Asignatura:** Aseguramiento de la Calidad del Software
 **Tema:** Pruebas de una arquitectura con caché (integración entre aplicación, caché y base de datos)
-**Integrantes:** Integrante A · Integrante B · Integrante C
+**Integrantes:** Sebastian Villa Castillo · Jhon Eduardo Zabala Garzon · Robin Alexander Montoya Velasquez
 
 > El protocolo y los criterios son explícitos para cada caso; los resultados de las secciones 11 y 12 se actualizaron después de ejecutar las pruebas y revisar sus evidencias.
 
 | # | Elemento | Responsable | Estado |
 |---|---|---|---|
-| 1 | Objetivo de las pruebas | A | Completo |
-| 2 | Componentes incluidos | A | Completo |
-| 3 | Alcance y exclusiones | A | Completo |
-| 4 | Puntos de integración | B | Completo |
-| 5 | Riesgos identificados | B | Completo |
-| 6 | Ambiente necesario | B | Completo |
-| 7 | Dependencias reales y simuladas | B | Completo |
-| 8 | Herramientas seleccionadas | C | Completo |
-| 9 | Datos de prueba | C | Completo |
-| 10 | Criterios de aprobación y fallo | C | Completo |
+| 1 | Objetivo de las pruebas | Sebastian | Completo |
+| 2 | Componentes incluidos | Sebastian | Completo |
+| 3 | Alcance y exclusiones | Sebastian | Completo |
+| 4 | Puntos de integración | Jhon Eduardo | Completo |
+| 5 | Riesgos identificados | Jhon Eduardo | Completo |
+| 6 | Ambiente necesario | Jhon Eduardo | Completo |
+| 7 | Dependencias reales y simuladas | Jhon Eduardo | Completo |
+| 8 | Herramientas seleccionadas | Robin | Completo |
+| 9 | Datos de prueba | Robin | Completo |
+| 10 | Criterios de aprobación y fallo | Robin | Completo |
 
 ---
 
@@ -145,7 +145,7 @@ No se usan mocks de Redis ni de PostgreSQL: todas las fallas se provocan sobre l
 
 Los scripts usan los nombres fijos de los contenedores (`lab-cache-redis`, `lab-cache-postgres`), así que funcionan igual con Docker y con Podman.
 
-### Escenarios de B (`scripts/escenarios/`)
+### Escenarios de falla (`scripts/escenarios/`)
 
 Cada escenario ejecuta un caso completo sobre la API en marcha (`npm start`) y el stack real. Verifica cada paso, restaura los datos que modifica (aunque el caso falle a mitad) y termina con `APROBADO` o `FALLIDO` y el código de salida correspondiente. Si se define `API_LOG` con la ruta del log de la API (`npm start > api.log`), el escenario anexa las líneas que la API registró durante el caso. Estos scripts son también el guion de la demostración.
 
@@ -156,11 +156,21 @@ Cada escenario ejecuta un caso completo sobre la API en marcha (`npm start`) y e
 | `npm run escenario:cp-06` | CP-06 · Dato desactualizado hasta que vence el TTL | ≈ `CACHE_TTL_SECONDS` | `docs/evidencias/CP-06_dato-desactualizado-ttl.txt` |
 | `npm run escenario:cp-08` | CP-08 · Recuperación de Redis | ~2 s | `docs/evidencias/CP-08_recuperacion-redis.txt` |
 
+Cada escenario imprime, con el prefijo `$`, el comando real que provoca o inspecciona la falla (`docker stop lab-cache-redis`, `docker start lab-cache-redis`, el `UPDATE` directo con `psql`, `redis-cli TTL`), así la evidencia muestra la causa y no solo el efecto.
+
+**Modo demo (paso a paso).** Para la exposición, los escenarios aceptan `--paso-a-paso`: antes de cada paso muestran su título y esperan Enter, para explicar qué se va a provocar antes de ejecutarlo. En este modo se carga `.env.demo`, que baja `CACHE_TTL_SECONDS` a 20 s para que CP-06 se vea completo en vivo; la API debe arrancarse con el mismo TTL.
+
+| Comando | Para qué |
+|---|---|
+| `npm run demo:api` | Arranca la API con `.env` y después `.env.demo` (TTL 20 s) |
+| `npm run demo:cp-08` | CP-08 paso a paso: `docker stop` → BYPASS y `/health` degraded → `docker start` → MISS → HIT |
+| `npm run demo:cp-06` | CP-06 paso a paso: `UPDATE` directo → HIT con el precio viejo ≠ BD → vence el TTL (~20 s) → MISS con el precio nuevo |
+
 Precondición común: todos los casos esperan a que `/health` reporte `redis = up` antes de empezar. Al ejecutarlos seguidos, el cliente de la API tarda hasta 2 s en reconectarse después de que el caso anterior vuelve a levantar Redis. Sin esa espera, el caso siguiente empezaba en `BYPASS`: un falso fallo causado por la preparación de la prueba y no por el sistema.
 
 ### Mecanismo de falla para la suite automatizada
 
-**Acuerdo B ↔ C implementado:** CP-05 detiene el contenedor real `lab-cache-redis` usando `docker stop`; al terminar, incluso ante un fallo, lo inicia y espera que Redis responda antes de restaurar los datos. Se eligió esta opción porque reproduce una caída en caliente con la misma API y servicios del laboratorio, sin introducir Testcontainers ni sustituir Redis por un mock. Los tests se ejecutan con Jest `--runInBand` para evitar que compartan la BD, Redis o el contenedor durante escenarios concurrentes.
+**Acuerdo entre Jhon Eduardo (caché y fallas) y Robin (pruebas automatizadas):** CP-05 detiene el contenedor real `lab-cache-redis` usando `docker stop`; al terminar, incluso ante un fallo, lo inicia y espera que Redis responda antes de restaurar los datos. Se eligió esta opción porque reproduce una caída en caliente con la misma API y servicios del laboratorio, sin introducir Testcontainers ni sustituir Redis por un mock. Los tests se ejecutan con Jest `--runInBand` para evitar que compartan la BD, Redis o el contenedor durante escenarios concurrentes.
 
 ## 8. Herramientas seleccionadas
 
@@ -223,7 +233,7 @@ La matriz completa de doce campos está en `docs/matriz-casos.xlsx`. El reporte 
 
 ### Hallazgo H-01. Configuración del cliente de Redis ante una falla de la caché
 
-*Responsable: Integrante B. Evidencia: `docs/evidencias/HALLAZGO-01_cliente-redis-por-defecto-vs-laboratorio.txt`.*
+*Responsable: Jhon Eduardo Zabala Garzon. Evidencia: `docs/evidencias/HALLAZGO-01_cliente-redis-por-defecto-vs-laboratorio.txt`.*
 
 Se midió el tiempo de un `GET` a Redis con dos configuraciones del cliente `redis` (node-redis):
 
@@ -248,8 +258,6 @@ Las pruebas respaldan los comportamientos previstos para cache-aside: el MISS ca
 La suite automatizada cubre CP-01 a CP-05 y CP-07 con PostgreSQL y Redis reales; los escenarios CP-06 y CP-08 aportan la verificación manual del TTL y de la recuperación. Los tiempos observados son pruebas funcionales puntuales y no permiten concluir sobre rendimiento bajo carga. La matriz y los reportes hacen reproducibles los resultados, siempre que las pruebas se ejecuten sobre el entorno local de laboratorio: la suite limpia la base `productos` y vacía Redis, y CP-05 detiene el contenedor.
 
 ## 13. Referencias
-
-> Cada integrante agrega las fuentes de su parte.
 
 - Redis. *Key eviction* (`maxmemory`, `allkeys-lru`). https://redis.io/docs/latest/develop/reference/eviction/
 - Redis. *Redis persistence* (RDB y AOF). https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/
