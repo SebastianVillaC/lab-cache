@@ -76,6 +76,18 @@ npm run escenario:cp-06
 npm run escenario:cp-08
 ```
 
+Cada escenario imprime con el prefijo `$` el comando real que provoca la falla (`docker stop lab-cache-redis`, el `UPDATE` directo con `psql`, `redis-cli TTL`).
+
+### Modo demo (paso a paso)
+
+Para la exposición, CP-06 y CP-08 tienen una variante que espera Enter antes de cada paso. Usa `.env.demo`, que baja el TTL a 20 s para que CP-06 no espere un minuto; por eso la API se arranca con el mismo TTL:
+
+```bash
+npm run demo:api     # terminal 1: API con TTL de 20 s (deja ver el log)
+npm run demo:cp-08   # terminal 2: docker stop → BYPASS → docker start → MISS → HIT
+npm run demo:cp-06   # terminal 2: UPDATE directo → dato viejo en caché → vence el TTL → MISS
+```
+
 Para ver llaves y TTL usa `npm run redis:inspeccionar`. Los datos directos de demostración pueden restaurarse reiniciando el entorno con `npm run infra:reset` desde PowerShell.
 
 ## Evidencias y análisis

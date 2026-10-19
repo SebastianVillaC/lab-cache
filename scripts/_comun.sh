@@ -4,8 +4,17 @@ set -euo pipefail
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$RAIZ"
 
+# Modo paso a paso (demo en vivo): con --paso-a-paso cada paso espera Enter antes de ejecutarse
+# y se usa el TTL corto de .env.demo. Se exporta para que lo hereden redis-caida.sh y redis-recuperar.sh.
+PASO_A_PASO="${PASO_A_PASO:-0}"
+for arg in "$@"; do
+  if [[ "$arg" == --paso-a-paso ]]; then PASO_A_PASO=1; fi
+done
+export PASO_A_PASO
+
 # Mismos valores por defecto que compose.yaml; .env los sobrescribe si existe.
 if [[ -f .env ]]; then set -a; source .env; set +a; fi
+if [[ "$PASO_A_PASO" == 1 && -f .env.demo ]]; then set -a; source .env.demo; set +a; fi
 POSTGRES_USER="${POSTGRES_USER:-lab}"
 POSTGRES_DB="${POSTGRES_DB:-labcache}"
 
@@ -15,6 +24,21 @@ redis_cli() { docker exec lab-cache-redis redis-cli "$@"; }
 psql_lab() { docker exec -i lab-cache-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" "$@"; }
 
 marca() { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$*"; }
+
+# mostrar "comando"   Imprime el comando real que provoca o inspecciona la falla, para que se vea
+# en la demo y quede en la evidencia. En modo paso a paso va resaltado.
+mostrar() {
+  if [[ "$PASO_A_PASO" == 1 ]]; then
+    printf '  \033[1;36m$ %s\033[0m\n' "$*"
+  else
+    printf '  $ %s\n' "$*"
+  fi
+}
+
+# Con `if` y no con `[[ ]] && read`: con set -e, un retorno 1 de la función detendría el script.
+pausa() {
+  if [[ "$PASO_A_PASO" == 1 ]]; then read -rp '  ⏎ Enter para continuar...' </dev/tty; fi
+}
 
 # --- Escenarios de prueba (scripts/escenarios/) ---------------------------------------------
 
@@ -28,8 +52,9 @@ peticion() {
   local metodo="$1" ruta="$2" cuerpo="${3:-}" args=()
   [[ -n "$cuerpo" ]] && args=(-H 'Content-Type: application/json' --data "$cuerpo")
   local salida
+  # ${args[@]+...}: en bash 3.2 (el de macOS) expandir un arreglo vacío con set -u es un error.
   salida="$(curl -s -o "$_TMP/cuerpo" -D "$_TMP/headers" -w '%{http_code} %{time_total}' \
-    -X "$metodo" "${args[@]}" "$API_URL$ruta")" || { ESTADO=000; XCACHE=-; MS=0; CUERPO=''; }
+    -X "$metodo" ${args[@]+"${args[@]}"} "$API_URL$ruta")" || { ESTADO=000; XCACHE=-; MS=0; CUERPO=''; }
   if [[ -n "${salida:-}" ]]; then
     ESTADO="${salida%% *}"
     MS="$(awk -v t="${salida##* }" 'BEGIN { printf "%d", t * 1000 }')"
@@ -52,7 +77,8 @@ verificar() {
   fi
 }
 
-paso() { printf '\n'; marca "$*"; }
+# El título del paso sale antes de la pausa: en la demo se anuncia qué va a pasar y luego se ejecuta.
+paso() { printf '\n'; marca "$*"; pausa; }
 
 precio_bd() { psql_lab -tAc "SELECT precio::float8 FROM productos WHERE id = $1"; }
 campo() { jq -r ".$1" <<<"$CUERPO"; }

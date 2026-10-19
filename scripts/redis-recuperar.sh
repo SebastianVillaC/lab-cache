@@ -4,6 +4,7 @@
 source "$(dirname "$0")/_comun.sh"
 
 marca "Levantando Redis..."
+mostrar "docker start lab-cache-redis"
 docker start lab-cache-redis >/dev/null
 for _ in $(seq 1 30); do
   if [[ "$(redis_cli PING 2>/dev/null)" == "PONG" ]]; then
